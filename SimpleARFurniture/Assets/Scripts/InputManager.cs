@@ -13,8 +13,8 @@ public class InputManager : MonoBehaviour
 
     private Touch touch;
     private Pose pose;
-    private GameObject spawnObject;
-    private GameObject GameObjectToPlace;
+    private GameObject spawnObject; //the object to spawn
+    private GameObject GameObjectToPlace;   //the object which is used to place. Here are used to store the object.
     static public GameObject nowObject;
     public Button buttonUp;
     public Button buttonDown;
@@ -30,13 +30,15 @@ public class InputManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //fisrt to load a marker to show the place a object
         CrosshairCalculation();
+        //if there has a touch input, save the touch info, else return.
         if (Input.touchCount > 0) touch = Input.GetTouch(0);
-
         if (Input.touchCount < 0 || touch.phase != TouchPhase.Began)
             return;
-        
+        //check the touch whether the touch is point on the UI
         if (IsPointerOverUI(touch)) return;
+
         if (IsPointerOverGameObject(touch))
         {
             buttonUp.gameObject.SetActive(true);
@@ -52,27 +54,29 @@ public class InputManager : MonoBehaviour
             buttonDelete.gameObject.SetActive(false);
             buttonLeft.gameObject.SetActive(false);
             buttonRight.gameObject.SetActive(false);
-            if (spawnObject == null)
+            //check the object and decide the manipulations
+            if (spawnObject == null)    //if no object in the vision
             {
-                spawnObject = Instantiate(DataHandler.Instance.furniture, pose.position, pose.rotation);
+                spawnObject = Instantiate(DataHandler.Instance.furniture, pose.position, pose.rotation); //instantiate the instance which is handled.
+                GameObjectToPlace = DataHandler.Instance.furniture; //save the handled instance
+            }
+            else if (GameObjectToPlace != DataHandler.Instance.furniture) //if select the new object
+            {
+                spawnObject = Instantiate(DataHandler.Instance.furniture, pose.position, pose.rotation); //re-instantiate the instance
                 GameObjectToPlace = DataHandler.Instance.furniture;
             }
-            else if (GameObjectToPlace != DataHandler.Instance.furniture)
-            {
-                spawnObject = Instantiate(DataHandler.Instance.furniture, pose.position, pose.rotation);
-                GameObjectToPlace = DataHandler.Instance.furniture;
-            }
-            else
-                spawnObject.transform.position = pose.position;
+            else //tap other place but the instance don't change
+                spawnObject.transform.position = pose.position; //change position of the object showed in the vision
         }
     }
     
+    //this part i learned from website
     bool IsPointerOverUI(Touch touch)
     {
         PointerEventData eventData = new PointerEventData(EventSystem.current);
-        eventData.position = new Vector2(touch.position.x, touch.position.y);
+        eventData.position = new Vector2(touch.position.x, touch.position.y); //store the position of touch
         List<RaycastResult> results = new List<RaycastResult>();
-        EventSystem.current.RaycastAll(eventData, results);
+        EventSystem.current.RaycastAll(eventData, results); //Emit rays to the click
         return results.Count > 0;
     }
 
@@ -92,16 +96,18 @@ public class InputManager : MonoBehaviour
         }
         return false;
     }
+
     void CrosshairCalculation()
     {
         Vector3 origin = arCam.ViewportToScreenPoint(new Vector3(0.5f, 0.5f, 0));
         Ray ray = arCam.ScreenPointToRay(origin);
-      
+
+        //find the pose and position of marker
         if (_raycastManager.Raycast(ray, _hits))
         {
             pose = _hits[0].pose;
             crosshair.transform.position = pose.position;
-            crosshair.transform.eulerAngles = new Vector3(90,0,0);
+            crosshair.transform.eulerAngles = new Vector3(90,0,0); //let the marker parallel to plane
         }
     }
 }
